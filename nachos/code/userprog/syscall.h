@@ -106,7 +106,9 @@ typedef int OpenFileId;
 
 #define ConsoleInput	0  
 #define ConsoleOutput	1  
- 
+
+#define MAX_SEM 400  
+
 /* Create a Nachos file, with "name" */
 void sys_Create(char *name);
 

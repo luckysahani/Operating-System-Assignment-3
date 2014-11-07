@@ -56,6 +56,11 @@ static void WriteDone(int arg) { writeDone->V(); }
 
 extern void StartProcess (char*);
 
+Semaphore* sem[MAX_SEM];
+int sem_key[MAX_SEM] = {0};
+
+
+
 void
 ForkStartFunction (int dummy)
 {
@@ -309,8 +314,67 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
+    else if((which == SyscallException) && (type == syscall_SemGet)){
+      int key = machine->ReadRegister(4);
+      bool found=0;
+      for(int j=0;j<MAX_SEM && !found;j++){
+        if(sem_key[j]==key){
+          machine->WriteRegister(2,j);
+          found=1;
+          break;
+        }
+      }
+      if(!found){
+        for(int j=0;j<MAX_SEM;j++){
+          if(sem_key[j]==0){
+            sem_key[j]=key;
+            sem[j]= new Semaphore("Semaphore",1);
+            machine->WriteRegister(2,j);
+          }
+        }
+      }
+      machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+      machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+      machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
+    }
     else if((which == SyscallException) && (type == syscall_SemOp)){
-      
+      int id = machine->ReadRegister(4);
+      int op = machine->ReadRegister(5);
+      if(op==1){
+        sem[id]->V();
+      }
+      else if(op==-1){
+        sem[id]->P();
+      }
+      machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+      machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+      machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
+    }
+    else if((which == SyscallException) && (type == syscall_SemCtl)){
+      int id = machine->ReadRegister(4);
+      int op = machine->ReadRegister(5);
+      int semaddr = machine->ReadRegister(6);
+      if(op == SYNCH_REMOVE){
+        delete sem[id];
+        sem_key[id]=0;
+        machine->WriteRegister(2,0);
+      }
+      else if(op == SYNCH_GET){
+        int addr = machine->GetPA(semaddr);
+        machine->mainMemory[addr] = sem[id]->get_value();
+        machine->WriteRegister(2,0);
+      }
+      else if(op == SYNCH_SET){
+        int addr = machine->GetPA(semaddr);
+        sem[id]->set_value(machine->mainMemory[addr]);
+        machine->WriteRegister(2,0);
+      }
+      else{
+        machine->WriteRegister(2,-1);
+      }
+      machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
+      machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
+      machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else {
 	printf("Unexpected user mode exception %d %d\n", which, type);

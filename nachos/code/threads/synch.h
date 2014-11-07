@@ -42,7 +42,8 @@ class Semaphore {
     Semaphore(char* debugName, int initialValue);	// set initial value
     ~Semaphore();   					// de-allocate semaphore
     char* getName() { return name;}			// debugging assist
-    
+    int get_value();
+    void set_value(int val);
     void P();	 // these are the only operations on a semaphore
     void V();	 // they are both *atomic*
     
