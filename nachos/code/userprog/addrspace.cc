@@ -97,6 +97,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	pageTable[i].shared= FALSE;				// a separate page, we could set its 
 					// pages to be read-only
     }
+
+
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
 //    bzero(&machine->mainMemory[numPagesAllocated*PageSize], size);
@@ -104,29 +106,34 @@ AddrSpace::AddrSpace(OpenFile *executable)
 //    numPagesAllocated += numPages;
 
 // then, copy in the code and data segments into memory
-    if (noffH.code.size > 0) {
-        DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
-			noffH.code.virtualAddr, noffH.code.size);
-        vpn = noffH.code.virtualAddr/PageSize;
-        offset = noffH.code.virtualAddr%PageSize;
-        entry = &pageTable[vpn];
-        pageFrame = entry->physicalPage;
-        executable->ReadAt(&(machine->mainMemory[pageFrame * PageSize + offset]),
-			noffH.code.size, noffH.code.inFileAddr);
-    }
-    if (noffH.initData.size > 0) {
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
-			noffH.initData.virtualAddr, noffH.initData.size);
-        vpn = noffH.initData.virtualAddr/PageSize;
-        offset = noffH.initData.virtualAddr%PageSize;
-        entry = &pageTable[vpn];
-        pageFrame = entry->physicalPage;
-        executable->ReadAt(&(machine->mainMemory[pageFrame * PageSize + offset]),
-			noffH.initData.size, noffH.initData.inFileAddr);
-    }
+   //  if (noffH.code.size > 0) {
+   //      DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
+			// noffH.code.virtualAddr, noffH.code.size);
+   //      vpn = noffH.code.virtualAddr/PageSize;
+   //      offset = noffH.code.virtualAddr%PageSize;
+   //      entry = &pageTable[vpn];
+   //      pageFrame = entry->physicalPage;
+   //      executable->ReadAt(&(machine->mainMemory[pageFrame * PageSize + offset]),
+			// noffH.code.size, noffH.code.inFileAddr);
+   //  }
+   //  if (noffH.initData.size > 0) {
+   //      DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
+			// noffH.initData.virtualAddr, noffH.initData.size);
+   //      vpn = noffH.initData.virtualAddr/PageSize;
+   //      offset = noffH.initData.virtualAddr%PageSize;
+   //      entry = &pageTable[vpn];
+   //      pageFrame = entry->physicalPage;
+   //      executable->ReadAt(&(machine->mainMemory[pageFrame * PageSize + offset]),
+			// noffH.initData.size, noffH.initData.inFileAddr);
+   //  }
 
 }
 
+
+void
+AddrSpace::initbackup(int size){
+    backup = new char[size];
+}
 
 int
 AddrSpace::shm_all(int size_shared){

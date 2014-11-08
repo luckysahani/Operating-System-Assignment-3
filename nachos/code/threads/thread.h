@@ -161,7 +161,6 @@ class Thread {
     ThreadStatus status;		// ready, running or blocked
     
     char* name;
-
     int pid, ppid;			// My pid and my parent's pid
 
     int childpidArray[MAX_CHILD_COUNT];	// My children

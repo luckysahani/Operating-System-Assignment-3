@@ -37,10 +37,13 @@ class AddrSpace {
     unsigned GetNumPages();
 
     TranslationEntry* GetPageTable();
+    void initbackup(int size);
+
 
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!
+    char * backup;
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
 };
