@@ -456,7 +456,8 @@ ExceptionHandler(ExceptionType which)
       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if (which == PageFaultException) {
-      DEBUG('p',"We encountered a page fault excetion.\n");
+      DEBUG('p',"We encountered a page fault exception.\n");
+
     }
     else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
