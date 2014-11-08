@@ -98,7 +98,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 					// pages to be read-only
     }
 
-
+    initbackup(size);
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
 //    bzero(&machine->mainMemory[numPagesAllocated*PageSize], size);
