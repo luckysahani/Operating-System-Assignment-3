@@ -195,20 +195,20 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 
 // check for alignment errors
     if (((size == 4) && (virtAddr & 0x3)) || ((size == 2) && (virtAddr & 0x1))){
-	DEBUG('a', "alignment problem at %d, size %d!\n", virtAddr, size);
-	return AddressErrorException;
+  DEBUG('a', "alignment problem at %d, size %d!\n", virtAddr, size);
+  return AddressErrorException;
     }
     
     // we must have either a TLB or a page table, but not both!
-    ASSERT(tlb == NULL || pageTable == NULL);	
-    ASSERT(tlb != NULL || pageTable != NULL);	
+    ASSERT(tlb == NULL || pageTable == NULL); 
+    ASSERT(tlb != NULL || pageTable != NULL); 
 
 // calculate the virtual page number, and offset within the page,
 // from the virtual address
     vpn = (unsigned) virtAddr / PageSize;
     offset = (unsigned) virtAddr % PageSize;
     
-    if (tlb == NULL) {		// => page table => vpn is index into table
+  if (tlb == NULL) {		// => page table => vpn is index into table
 	if (vpn >= pageTableSize) {
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
 			virtAddr, pageTableSize);
