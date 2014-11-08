@@ -132,7 +132,7 @@ void Condition::Wait(Semaphore* sem){
     q->Append((void *)currentThread);   // so go to sleep
     count++;
     currentThread->Sleep(); 
-    (void)interrupt->SetLevel(oldLevel);
+    (void)interrupt->SetLevel(oldlevel);
     sem->P();
 }
 

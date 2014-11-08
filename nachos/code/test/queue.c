@@ -20,14 +20,14 @@ Enqueue (int x, int id)
 {
    int y;
 
-   sys_SemOp(semid, -1);
-   while (array[SIZE+2] == SIZE) {
-      sys_SemOp(stdoutsemid, -1);
+   sys_SemOp(semid, -1);            // Call wait() on the semaphore for mutual exclusion
+   while (array[SIZE+2] == SIZE) {  
+      sys_SemOp(stdoutsemid, -1);   // stdout waale semaphore per wait kkarwa rahe hai
       sys_PrintString("Enqueuer ");
       sys_PrintInt(id);
       sys_PrintString(": waiting on queue full.");
       sys_PrintChar('\n');
-      sys_SemOp(stdoutsemid, 1);
+      sys_SemOp(stdoutsemid, 1);    // stdout ko unlock kar do
       sys_CondOp(notFullid, COND_OP_WAIT, semid);
    }
    array[array[SIZE+1]] = x;
@@ -67,7 +67,7 @@ int
 main()
 {
     array = (int*)sys_ShmAllocate(sizeof(int)*(SIZE+3));  // queue[SIZE], head, tail, count
-    int x, i, j, seminit = 1, y;
+    int x, i, j, k, seminit = 1, y;
     int pid[NUM_DEQUEUER+NUM_ENQUEUER];
 
     for (i=0; i<SIZE; i++) array[i] = -1;
@@ -118,6 +118,11 @@ main()
              sys_PrintString(" in slot ");
              sys_PrintInt(y);
              sys_PrintChar('\n');
+             for (k=0; k<SIZE; k++) {
+                sys_PrintInt(array[k]);
+                sys_PrintString('  ');
+             }
+             sys_PrintString("\n");
              sys_SemOp(stdoutsemid, 1);
           }
           sys_Exit(ENQUEUE_EXIT_CODE);
@@ -133,6 +138,11 @@ main()
        sys_PrintString(" having exit code ");
        sys_PrintInt(x);
        sys_PrintChar('\n');
+       for (k=0; k<SIZE; k++) {
+          sys_PrintInt(array[k]);
+          sys_PrintString('  ');
+        }
+        sys_PrintString("\n");
        sys_SemOp(stdoutsemid, 1);
     }
     sys_SemCtl(semid, SYNCH_REMOVE, 0);

@@ -357,7 +357,12 @@ ExceptionHandler(ExceptionType which)
       int id = machine->ReadRegister(4);
       int op = machine->ReadRegister(5);
       int semaddr = machine->ReadRegister(6);
-      if(op == SYNCH_REMOVE){
+
+      
+      if(sem[id]==0){
+        machine->WriteRegister(2,-1);
+      }
+      else if(op == SYNCH_REMOVE){
         delete sem[id];
         sem_key[id]=0;
         machine->WriteRegister(2,0);
@@ -398,7 +403,7 @@ ExceptionHandler(ExceptionType which)
         for(int j=0;j<MAX_COND;j++){
           if(cond_key[j]==0){
             cond_key[j]=key;
-            cond[j]= new Semaphore("Semaphore",1);
+            cond[j]= new Condition("Cond");
             machine->WriteRegister(2,j);
           }
         }
@@ -407,25 +412,12 @@ ExceptionHandler(ExceptionType which)
       machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
-    else if((which == SyscallException) && (type == syscall_CondGet)){
-      int id = machine->ReadRegister(4);
-      int op = machine->ReadRegister(5);
-      if(op==1){
-        cond[id]->V();
-      }
-      else if(op==-1){
-        cond[id]->P();
-      }
-      machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
-      machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
-      machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
-    }
     else if((which == SyscallException) && (type == syscall_CondRemove)){
 
       int id= machine->ReadRegister(4);
-      IntStatus = interrupt->SetLevel(IntOff);
+      IntStatus oldlevel = interrupt->SetLevel(IntOff);
       if(cond_key[id]!=0){
-        delete sem[id];
+        delete cond[id];
         cond_key[id]=0;
         machine->WriteRegister(2,0);
       }
@@ -437,7 +429,7 @@ ExceptionHandler(ExceptionType which)
       machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
-    else if((which == SyscallException) && (type == Cond_Op)){
+    else if((which == SyscallException) && (type == syscall_CondOp)){
       int id = machine->ReadRegister(4);
       int op = machine->ReadRegister(5);
       int semid = machine->ReadRegister(6);
@@ -453,7 +445,7 @@ ExceptionHandler(ExceptionType which)
         machine->WriteRegister(2,0);
       }
       else if(op == COND_OP_BROADCAST){
-        con[id]->Broadcast();
+        cond[id]->Broadcast();
         machine->WriteRegister(2,0);
       }
       else{

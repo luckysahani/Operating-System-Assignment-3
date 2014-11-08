@@ -1,35 +1,31 @@
-/* printtest.c
- *	Simple program to test whether printing from a user program works.
- *	
- *	Just do a "syscall" that shuts down the OS.
- *
- * 	NOTE: for some reason, user programs with global data structures 
- *	sometimes haven't worked in the Nachos environment.  So be careful
- *	out there!  One option is to allocate data structures as 
- * 	automatics within a procedure, but if you do this, you have to
- *	be careful to allocate a big enough stack to hold the automatics!
- */
-
 #include "syscall.h"
-
+#include "synchop.h"
+#define SEMKEY 19
+#define CONDKEY 17
 int
 main()
 {
-    // sys_PrintString("hello world\n");
-    // sys_PrintString("Executed ");
-    // sys_PrintInt(sys_GetNumInstr());
-    // sys_PrintString(" instructions.\n");
-
-    int *array = (int*)sys_ShmAllocate(2*sizeof(int));
- //   array[0]=1;
+    int *array = (int *)sys_ShmAllocate(10*sizeof(int));
+    array[0]=1;
+    int id = sys_SemGet(SEMKEY);
+    int id1 = sys_SemGet(20);
     int x = sys_Fork();
-    if (x == 0) {
-    	array[0]=1;
+    if(x == 0) {
+        sys_SemOp(id, -1);
+        sys_Sleep(1000);
+        sys_SemOp(id1, -1);
+        sys_PrintString("In the child thread at the moment\n");
+        array[0]=10;
+        sys_SemOp(id1, 1);
+        sys_SemOp(id, 1);
+    } 
+    else {
+    //    while(array[0]!=10); // busy-wait
+        sys_Sleep(10000);
+        sys_SemOp(id1, -1);
+        sys_SemOp(id, -1);
+        sys_PrintString("In the parent thread at them moment");
+        sys_SemOp(id, 1);
+        sys_SemOp(id1,1);
     }
-    else{
-    	sys_Sleep(1000);
-    	sys_PrintString("hello \n");
-    	sys_PrintInt(array[0]);
-    }
-    return 0;
 }
