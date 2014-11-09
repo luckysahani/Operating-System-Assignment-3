@@ -38,7 +38,7 @@ StartProcess(char *filename)
 	printf("Unable to open file %s\n", filename);
 	return;
     }
-    space = new AddrSpace(executable);    
+    space = new AddrSpace(executable,filename);    
     currentThread->space = space;
 
     delete executable;			// close file
@@ -161,7 +161,7 @@ ReadInputAndFork (char *filename)
       }
       sprintf(buffer,"Thread_%d",i+1);
       Thread *child = new Thread(buffer, priority[i]);
-      child->space = new AddrSpace (inFile);
+      child->space = new AddrSpace (inFile,batchProcesses[i]);
       delete inFile;
       child->space->InitRegisters();             // set the initial register values
       child->SaveUserState ();

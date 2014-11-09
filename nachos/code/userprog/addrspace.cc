@@ -57,7 +57,7 @@ SwapHeader (NoffHeader *noffH)
 //	"executable" is the file containing the object code to load into memory
 //----------------------------------------------------------------------
 
-AddrSpace::AddrSpace(OpenFile *executable)
+AddrSpace::AddrSpace(OpenFile *executable, char * filename)
 {
     NoffHeader noffH;
     unsigned int i, size;
@@ -65,8 +65,9 @@ AddrSpace::AddrSpace(OpenFile *executable)
     TranslationEntry *entry;
     unsigned int pageFrame;
 
-    exec_ptr = executable;
-
+    char_exec = filename;
+//    exec_ptr = executable;
+//    DEBUG('p',"In exec_ptr \n");
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
@@ -80,13 +81,13 @@ AddrSpace::AddrSpace(OpenFile *executable)
     numPages = divRoundUp(size, PageSize);
     size = numPages * PageSize;
 
-//    ASSERT(numPages+numPagesAllocated <= NumPhysPages);		// check we're not trying
+    ASSERT(numPages+numPagesAllocated <= NumPhysPages);		// check we're not trying
 										// to run anything too big --
 										// at least until we have
 										// virtual memory
 
-    DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
-					numPages, size);
+    DEBUG('p', "Initializing address space, num pages %d, size %d\n", 
+					size, noffH.code.size);
 // first, set up the translation 
     pageTable = new TranslationEntry[numPages];
     for (i = 0; i < numPages; i++) {
@@ -96,25 +97,19 @@ AddrSpace::AddrSpace(OpenFile *executable)
 	pageTable[i].use = FALSE;
 	pageTable[i].dirty = FALSE;
 	pageTable[i].readOnly = FALSE;  // if the code segment was entirely on 
-	pageTable[i].shared= FALSE;				// a separate page, we could set its 
+	pageTable[i].shared= FALSE;
+    pageTable[i].backedup=FALSE;				// a separate page, we could set its 
 					// pages to be read-only
     }
 
     initbackup(size);
-// zero out the entire address space, to zero the unitialized data segment 
-// and the stack segment
-//    bzero(&machine->mainMemory[numPagesAllocated*PageSize], size);
- 
-//    numPagesAllocated += numPages;
-
-// then, copy in the code and data segments into memory
    //  if (noffH.code.size > 0) {
    //      DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
 			// noffH.code.virtualAddr, noffH.code.size);
    //      vpn = noffH.code.virtualAddr/PageSize;
    //      offset = noffH.code.virtualAddr%PageSize;
    //      entry = &pageTable[vpn];
-   //      pageFrame = entry->physicalPage;
+   //      pageFrame = 0;
    //      executable->ReadAt(&(machine->mainMemory[pageFrame * PageSize + offset]),
 			// noffH.code.size, noffH.code.inFileAddr);
    //  }
@@ -201,7 +196,7 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
     for (i = 0; i < numPages; i++) {
 
         pageTable[i].virtualPage = i;
-        if(parentPageTable[i].shared==FALSE){
+        if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
             pageTable[i].physicalPage = j+numPagesAllocated;
             j++;
         }
@@ -225,7 +220,7 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
     j=0;
     
     for (i=0; i<numPages; i++) {
-        if(!parentPageTable[i].shared){
+        if(!parentPageTable[i].shared && parentPageTable[i].valid){
             for(int k=0; k<PageSize; k++){
                 machine->mainMemory[startAddrChild+(j*PageSize+k)] = machine->mainMemory[startAddrParent+(i*PageSize+k)];
             }
@@ -324,19 +319,84 @@ AddrSpace::GetPageTable()
 int
 AddrSpace::handle_PFE(int vpn){
 
+    exec_ptr = fileSystem->Open(char_exec);
+    NoffHeader noffH;
     DEBUG('p',"Handling page faults inside handle_PFE\n");
     pageTable[vpn].valid = TRUE;
     numPagesAllocated++;
     int next_page;
     if(free_page_count!=0){
+        next_page = next_phys_index;
+        next_phys_index++;
+    }
+    else{
         next_page = (int)(pagesfree->Remove());
         free_page_count--;
     }
-    else{
-        next_page = next_phys_index;
-    }
     pageTable[vpn].physicalPage = next_page;
     DEBUG('p',"Handling page faults at the end handle_PFE %d\n",next_page);
-        
+    bzero(&machine->mainMemory[next_page*PageSize], PageSize);
+
+
+    if(!pageTable[vpn].backedup){
+        exec_ptr->ReadAt((char *)&noffH, sizeof(noffH), 0);
+
+        if (noffH.code.size > 0) {
+            int vpn_file = noffH.code.virtualAddr/PageSize;
+            int offset_file = noffH.code.virtualAddr%PageSize;
+            if(!(vpn_file > vpn || (noffH.code.virtualAddr+noffH.code.size)/PageSize < vpn))
+            {
+                if(vpn_file<=vpn){
+                    int offset=0;
+                    int copysize;
+                    if((noffH.code.virtualAddr+noffH.code.size)/PageSize > vpn)
+                    {
+                        DEBUG('p', "Initializing code segment, at 0x%x, size %d\n",noffH.code.virtualAddr, pageTable[vpn].physicalPage);                       
+                        exec_ptr->ReadAt(&(machine->mainMemory[next_page * PageSize + offset]),PageSize, noffH.code.inFileAddr+PageSize*vpn);
+                    }
+                    else{
+                        exec_ptr->ReadAt(&(machine->mainMemory[next_page * PageSize + offset]),noffH.code.size - PageSize*vpn, noffH.code.inFileAddr+PageSize*vpn);
+                    }
+                }
+                
+            }
+        }
+        if(noffH.initData.size > 0) {
+            DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
+                noffH.initData.virtualAddr, noffH.initData.size);
+            int vpn_file = noffH.initData.virtualAddr/PageSize;
+            int offset_file = noffH.initData.virtualAddr%PageSize;
+            if(!(vpn_file > vpn || (noffH.initData.virtualAddr+noffH.initData.size)/PageSize < vpn))
+            {
+                if(vpn_file<vpn){
+                    int offset=0;
+                    if((noffH.initData.virtualAddr+noffH.initData.size)/PageSize > vpn)
+                    {
+                        exec_ptr->ReadAt(&(machine->mainMemory[next_page * PageSize + offset]),PageSize, noffH.initData.inFileAddr + PageSize*vpn);
+                    }
+                    else{
+                         exec_ptr->ReadAt(&(machine->mainMemory[next_page * PageSize + offset]),noffH.initData.virtualAddr+noffH.initData.size - PageSize*vpn,
+                         noffH.initData.inFileAddr + PageSize*vpn- noffH.initData.virtualAddr);
+                    }
+                }
+                else{
+                    //    DEBUG('y',"Here at vpn %d with vpnfile %d\n ", vpn, vpn_file);
+                    if(offset_file+ noffH.initData.size > PageSize){
+                        exec_ptr->ReadAt(&(machine->mainMemory[next_page * PageSize + offset_file]),PageSize - offset_file, noffH.initData.inFileAddr);
+                    }
+                    else{
+                        exec_ptr->ReadAt(&(machine->mainMemory[next_page * PageSize + offset_file]),noffH.initData.size , noffH.initData.inFileAddr);
+                    } 
+                }
+                
+            }
+        }
+        pageTable[vpn].backedup=TRUE;
+    }
+    delete exec_ptr;
+    return vpn;
+    else{
+
+    }
 
 }

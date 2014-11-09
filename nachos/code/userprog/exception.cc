@@ -456,9 +456,10 @@ ExceptionHandler(ExceptionType which)
       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if (which == PageFaultException) {
-      int vpn = machine->ReadRegister(4);
+      int vpn = machine->ReadRegister(39);
       DEBUG('p',"We encountered a page fault exception. at vpn %d\n", vpn);
-      currentThread->space->handle_PFE(vpn);
+    //  currentThread->space->handle_PFE(vpn);
+      DEBUG('p',"New valid bit is %d\n", currentThread->space->handle_PFE(vpn));
     }
     else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
