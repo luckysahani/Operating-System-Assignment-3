@@ -458,7 +458,7 @@ ExceptionHandler(ExceptionType which)
     else if (which == PageFaultException) {
       int vpn = machine->ReadRegister(4);
       DEBUG('p',"We encountered a page fault exception. at vpn %d\n", vpn);
-
+      currentThread->space->handle_PFE(vpn);
     }
     else {
 	printf("Unexpected user mode exception %d %d\n", which, type);

@@ -132,6 +132,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 }
 
 
+
 void
 AddrSpace::initbackup(int size){
     backup = new char[size];
@@ -242,6 +243,11 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
 
 AddrSpace::~AddrSpace()
 {
+    for(unsigned int i=0;i<numPages;i++){
+        if(pageTable[i].valid && !pageTable[i].shared){
+            pagesfree->Append((void*)(pageTable[i].physicalPage));
+        }
+    }
    delete pageTable;
 }
 
@@ -312,4 +318,17 @@ TranslationEntry*
 AddrSpace::GetPageTable()
 {
    return pageTable;
+}
+
+
+int
+AddrSpace::handle_PFE(int vpn){
+
+  pageTable[vpn].physicalPage = numPagesAllocated;
+  pageTable[vpn].valid = TRUE;
+  numPagesAllocated++;
+
+  currentThread->space->exec_ptr;
+
+  DEBUG('p',"Handling page faults inside handle_PFE");
 }

@@ -30,7 +30,7 @@ class AddrSpace {
 
     void InitRegisters();		// Initialize user-level CPU registers,
 					// before jumping to user code
-
+    int handle_PFE(int vpn);
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch
 

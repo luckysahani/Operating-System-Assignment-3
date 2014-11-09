@@ -281,14 +281,3 @@ Machine::GetPA (unsigned vaddr)
 }
 
 
-int
-Machine::handle_PFE(int vpn){
-
-  pageTable[vpn].physicalPage = numPagesAllocated;
-  pageTable[vpn].valid = TRUE;
-  numPagesAllocated++;
-
-  currentThread->space->exec_ptr;
-
-  DEBUG('p',"Handling page faults inside handle_PFE");
-}

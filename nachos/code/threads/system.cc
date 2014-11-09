@@ -36,6 +36,17 @@ int cpu_burst_start_time;        // Records the start of current CPU burst
 int completionTimeArray[MAX_THREAD_COUNT];        // Records the completion time of all simulated threads
 bool excludeMainThread;		// Used by completion time statistics calculation
 
+List *pagesfree;
+int next_phys_index;
+
+// Our definations
+
+
+
+
+
+
+
 #ifdef FILESYS_NEEDED
 FileSystem  *fileSystem;
 #endif
@@ -115,6 +126,11 @@ Initialize(int argc, char **argv)
 
     initializedConsoleSemaphores = false;
     numPagesAllocated = 0;
+
+
+    pagesfree = new List[NumPhysPages];
+    next_phys_index = 0;
+    
 
     schedulingAlgo = NON_PREEMPTIVE_BASE;	// Default
 

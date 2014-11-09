@@ -58,6 +58,13 @@ extern int schedulingAlgo;		// Scheduling algorithm to simulate
 extern char **batchProcesses;		// Names of batch executables
 extern int *priority;			// Process priority
 
+// We have  defined this things
+extern List *pagesfree;
+extern int nest_phys_index;
+
+
+
+
 extern int cpu_burst_start_time;	// Records the start of current CPU burst
 extern int completionTimeArray[];	// Records the completion time of all simulated threads
 extern bool excludeMainThread;		// Used by completion time statistics calculation
