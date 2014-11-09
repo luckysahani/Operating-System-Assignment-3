@@ -65,6 +65,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
     TranslationEntry *entry;
     unsigned int pageFrame;
 
+    exec_ptr = executable;
+
     executable->ReadAt((char *)&noffH, sizeof(noffH), 0);
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))

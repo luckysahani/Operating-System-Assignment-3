@@ -456,7 +456,8 @@ ExceptionHandler(ExceptionType which)
       machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
     }
     else if (which == PageFaultException) {
-      DEBUG('p',"We encountered a page fault exception.\n");
+      int vpn = machine->ReadRegister(4);
+      DEBUG('p',"We encountered a page fault exception. at vpn %d\n", vpn);
 
     }
     else {

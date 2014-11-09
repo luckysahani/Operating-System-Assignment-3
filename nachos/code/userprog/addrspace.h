@@ -23,7 +23,7 @@ class AddrSpace {
     AddrSpace(OpenFile *executable);	// Create an address space,
 					// initializing it with the program
 					// stored in the file "executable"
-
+    OpenFile* exec_ptr;
     AddrSpace (AddrSpace *parentSpace);	// Used by fork
     int shm_all(int size);
     ~AddrSpace();			// De-allocate an address space
