@@ -324,11 +324,19 @@ AddrSpace::GetPageTable()
 int
 AddrSpace::handle_PFE(int vpn){
 
-  pageTable[vpn].physicalPage = numPagesAllocated;
-  pageTable[vpn].valid = TRUE;
-  numPagesAllocated++;
+    DEBUG('p',"Handling page faults inside handle_PFE\n");
+    pageTable[vpn].valid = TRUE;
+    numPagesAllocated++;
+    int next_page;
+    if(free_page_count!=0){
+        next_page = (int)(pagesfree->Remove());
+        free_page_count--;
+    }
+    else{
+        next_page = next_phys_index;
+    }
+    pageTable[vpn].physicalPage = next_page;
+    DEBUG('p',"Handling page faults at the end handle_PFE %d\n",next_page);
+        
 
-  currentThread->space->exec_ptr;
-
-  DEBUG('p',"Handling page faults inside handle_PFE");
 }

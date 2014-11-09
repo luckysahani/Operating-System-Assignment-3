@@ -60,8 +60,8 @@ extern int *priority;			// Process priority
 
 // We have  defined this things
 extern List *pagesfree;
-extern int nest_phys_index;
-
+extern int next_phys_index;
+extern int free_page_count;
 
 
 
