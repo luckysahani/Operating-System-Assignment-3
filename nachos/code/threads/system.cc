@@ -39,6 +39,8 @@ bool excludeMainThread;		// Used by completion time statistics calculation
 List *pagesfree;
 int next_phys_index;
 int free_page_count;
+int * physpid;
+int * physvpn;
 // Our definations
 
 
@@ -131,7 +133,8 @@ Initialize(int argc, char **argv)
     pagesfree = new List;
     next_phys_index = 0;
     free_page_count = 0;
-    
+    physpid = new int[NumPhysPages];
+    physvpn = new int[NumPhysPages];
 
     schedulingAlgo = NON_PREEMPTIVE_BASE;	// Default
 

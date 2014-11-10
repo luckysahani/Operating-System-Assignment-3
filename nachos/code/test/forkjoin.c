@@ -3,7 +3,7 @@
 int
 main()
 {
-    int x;
+    int x,y,z;
     int sleep_start, sleep_end;
 
     sys_PrintString("Parent PID: ");
@@ -11,6 +11,8 @@ main()
     sys_PrintChar('\n');
     x = sys_Fork();
     if (x == 0) {
+       y= sys_Fork();
+       z= sys_Fork();
        sys_PrintString("Child PID: ");
        sys_PrintInt(sys_GetPID());
        sys_PrintChar('\n');

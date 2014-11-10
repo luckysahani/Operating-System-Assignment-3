@@ -62,7 +62,8 @@ extern int *priority;			// Process priority
 extern List *pagesfree;
 extern int next_phys_index;
 extern int free_page_count;
-
+extern int * physpid;
+extern int * physvpn;
 
 
 extern int cpu_burst_start_time;	// Records the start of current CPU burst

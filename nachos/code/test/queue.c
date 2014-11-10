@@ -1,17 +1,17 @@
 #include "syscall.h"
 #include "synchop.h"
 
-#define SEM_KEY1 19		/* Key for semaphore protecting condition variables */
-#define SEM_KEY2 20		/* Key for semaphore protecting stdout buffer */
-#define COND_KEY1 19		/* Key for notFull condition variable */
-#define COND_KEY2 20		/* Key for notEmpty condition variable */
-#define SIZE 10			/* Size of queue */
-#define NUM_ENQUEUER 4		/* Number of enqueuer threads */
-#define NUM_DEQUEUER 1		/* Number of dequeuer threads */
-#define DEQUEUE_EXIT_CODE 20	/* Exit code for dequeuer threads */
-#define ENQUEUE_EXIT_CODE 10	/* Exit code for enqueuer threads */
-#define NUM_ENQUEUE_OP 10	/* Number of operations per enqueuer thread */
-#define NUM_DEQUEUE_OP (((NUM_ENQUEUE_OP*NUM_ENQUEUER)/NUM_DEQUEUER))	/* Number of operations per dequeuer thread */
+#define SEM_KEY1 19   /* Key for semaphore protecting condition variables */
+#define SEM_KEY2 20   /* Key for semaphore protecting stdout buffer */
+#define COND_KEY1 19    /* Key for notFull condition variable */
+#define COND_KEY2 20    /* Key for notEmpty condition variable */
+#define SIZE 10     /* Size of queue */
+#define NUM_ENQUEUER 4    /* Number of enqueuer threads */
+#define NUM_DEQUEUER 1    /* Number of dequeuer threads */
+#define DEQUEUE_EXIT_CODE 20  /* Exit code for dequeuer threads */
+#define ENQUEUE_EXIT_CODE 10  /* Exit code for enqueuer threads */
+#define NUM_ENQUEUE_OP 10 /* Number of operations per enqueuer thread */
+#define NUM_DEQUEUE_OP (((NUM_ENQUEUE_OP*NUM_ENQUEUER)/NUM_DEQUEUER)) /* Number of operations per dequeuer thread */
 
 int *array, semid, stdoutsemid, notFullid, notEmptyid;
 
@@ -20,14 +20,14 @@ Enqueue (int x, int id)
 {
    int y;
 
-   sys_SemOp(semid, -1);            // Call wait() on the semaphore for mutual exclusion
-   while (array[SIZE+2] == SIZE) {  
-      sys_SemOp(stdoutsemid, -1);   // stdout waale semaphore per wait kkarwa rahe hai
+   sys_SemOp(semid, -1);
+   while (array[SIZE+2] == SIZE) {
+      sys_SemOp(stdoutsemid, -1);
       sys_PrintString("Enqueuer ");
       sys_PrintInt(id);
       sys_PrintString(": waiting on queue full.");
       sys_PrintChar('\n');
-      sys_SemOp(stdoutsemid, 1);    // stdout ko unlock kar do
+      sys_SemOp(stdoutsemid, 1);
       sys_CondOp(notFullid, COND_OP_WAIT, semid);
    }
    array[array[SIZE+1]] = x;
@@ -67,7 +67,7 @@ int
 main()
 {
     array = (int*)sys_ShmAllocate(sizeof(int)*(SIZE+3));  // queue[SIZE], head, tail, count
-    int x, i, j, k, seminit = 1, y;
+    int x, i, j, seminit = 1, y;
     int pid[NUM_DEQUEUER+NUM_ENQUEUER];
 
     for (i=0; i<SIZE; i++) array[i] = -1;
@@ -118,11 +118,6 @@ main()
              sys_PrintString(" in slot ");
              sys_PrintInt(y);
              sys_PrintChar('\n');
-             for (k=0; k<SIZE; k++) {
-                sys_PrintInt(array[k]);
-                sys_PrintString('  ');
-             }
-             sys_PrintString("\n");
              sys_SemOp(stdoutsemid, 1);
           }
           sys_Exit(ENQUEUE_EXIT_CODE);
@@ -138,11 +133,6 @@ main()
        sys_PrintString(" having exit code ");
        sys_PrintInt(x);
        sys_PrintChar('\n');
-       for (k=0; k<SIZE; k++) {
-          sys_PrintInt(array[k]);
-          sys_PrintString('  ');
-        }
-        sys_PrintString("\n");
        sys_SemOp(stdoutsemid, 1);
     }
     sys_SemCtl(semid, SYNCH_REMOVE, 0);
