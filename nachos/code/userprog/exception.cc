@@ -169,6 +169,7 @@ ExceptionHandler(ExceptionType which)
        child = new Thread("Forked thread", GET_NICE_FROM_PARENT);
      //  DEBUG('f', "In forked exception");
        child->space = new AddrSpace (currentThread->space);  // Duplicates the address space
+       child->space->Manage(child->GetPID(),currentThread->space);
        child->SaveUserState ();		     		      // Duplicate the register set
        child->ResetReturnValue ();			     // Sets the return register to zero
        child->StackAllocate (ForkStartFunction, 0);	// Make it ready for a later context switch

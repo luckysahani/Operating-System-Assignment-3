@@ -40,7 +40,7 @@ class AddrSpace {
     TranslationEntry* GetPageTable();
     void initbackup(int size);
 
-
+    void Manage(int pid,AddrSpace *parentSpace);
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!

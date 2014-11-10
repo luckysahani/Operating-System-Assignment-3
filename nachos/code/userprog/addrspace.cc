@@ -14,7 +14,7 @@
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
-
+#include <stdio.h>
 #include "copyright.h"
 #include "system.h"
 #include "addrspace.h"
@@ -193,7 +193,7 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
     numPages = parentSpace->GetNumPages();
     unsigned i, size = numPages * PageSize;
 
-    ASSERT(numPages+numPagesAllocated <= NumPhysPages);                // check we're not trying
+//    ASSERT(numPages+numPagesAllocated <= NumPhysPages);                // check we're not trying
                                                                                 // to run anything too big --
                                                                                 // at least until we have
                                                                 // virtual memory
@@ -208,28 +208,37 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
     int next_page,next_page_parent;
     for (i = 0; i < numPages; i++) {
 
-        pageTable[i].virtualPage = i;
-        if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
-            if(free_page_count!=0){
-                next_page = (int)(pagesfree->Remove());
-                free_page_count--;
-            }
-            else{
-                next_page = next_phys_index;
-                next_phys_index++;
-            }
-            pageTable[i].physicalPage = next_page;
-            physpid[next_page] = currentThread->GetPID();
-            next_page_parent=parentPageTable[i].physicalPage;
-            j++;
-            for(int z=0;z<PageSize;z++){
-                machine->mainMemory[PageSize*next_page+z] = machine->mainMemory[next_page_parent*PageSize+z];
-            }
-        }
-        else{
-            pageTable[i].physicalPage=parentPageTable[i].physicalPage;
-    //        DEBUG('k',"Hello %d\n",i);
-        }
+    //     pageTable[i].virtualPage = i;
+    //     if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
+    //         if(numPagesAllocated == NumPhysPages){
+    //             next_page=replace(0,0);
+    //         }
+    //         else if(free_page_count!=0){
+    //             next_page = (int)(pagesfree->Remove());
+    //             free_page_count--;
+    //             numPagesAllocated++;
+    //         }
+    //         else{
+                
+    //             next_page = next_phys_index;
+    //             next_phys_index++;
+    //             numPagesAllocated++;
+    //         }
+    //         pageTable[i].physicalPage = next_page;
+    //         physpid[next_page] = 1;
+    //         //DEBUG('w', "I am here for vpn%d and numPagesAllocated%d\n",i,numPagesAllocated);
+    //         DEBUG('w', "I am here for pid%d\n",1);
+    //         physvpn[next_page] = i;
+    //         next_page_parent=parentPageTable[i].physicalPage;
+    //         j++;
+    //         for(int z=0;z<PageSize;z++){
+    //             machine->mainMemory[PageSize*next_page+z] = machine->mainMemory[next_page_parent*PageSize+z];
+    //         }
+    //     }
+    //     else{
+    //         pageTable[i].physicalPage=parentPageTable[i].physicalPage;
+    // //        DEBUG('k',"Hello %d\n",i);
+    //     }
         pageTable[i].valid = parentPageTable[i].valid;
         pageTable[i].use = parentPageTable[i].use;
         pageTable[i].dirty = parentPageTable[i].dirty;
@@ -237,9 +246,13 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
         pageTable[i].shared = parentPageTable[i].shared;                                            // a separate page, we could set its
                                                     // pages to be read-only
     }
-    
-    numPagesAllocated += j;
+    initbackup(size);
+    for(int i=0;i<size;i++){
+        backup[i] = parentSpace->backup[i];
+    }
 
+   // DEBUG('w', "I am here for vpn after fork\n");
+    
     // Copy the contents
     // unsigned startAddrParent = parentPageTable[0].physicalPage*PageSize;
     // unsigned startAddrChild = numPagesAllocated*PageSize;
@@ -255,8 +268,11 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
         }
     }
 */
-    DEBUG('f', "In th fork\n");
 }
+
+
+
+
 
 //----------------------------------------------------------------------
 // AddrSpace::~AddrSpace
@@ -265,11 +281,15 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
 
 AddrSpace::~AddrSpace()
 {
+    DEBUG('w', "Getting outof thread\n");
     for(unsigned int i=0;i<numPages;i++){
         if(pageTable[i].valid && !pageTable[i].shared){
-            pagesfree->Append((void*)(pageTable[i].physicalPage));
+            if(pageTable[i].valid){
+                pagesfree->Append((void*)(pageTable[i].physicalPage));
+                numPagesAllocated--;
+
+            }
         }
-        numPagesAllocated--;
     }
    delete pageTable;
 }
@@ -350,10 +370,11 @@ AddrSpace::handle_PFE(int vpn){
     exec_ptr = fileSystem->Open(char_exec);
     NoffHeader noffH;
     DEBUG('p',"Handling page faults inside handle_PFE\n");
-    pageTable[vpn].valid = TRUE;
     int next_page;
 
+        DEBUG('o',"In the handle_PFE for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
     if(numPagesAllocated == NumPhysPages){
+                DEBUG('o',"In the replacement for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
         next_page=replace(0,0);
     }
     else if(free_page_count!=0){
@@ -367,6 +388,7 @@ AddrSpace::handle_PFE(int vpn){
         next_phys_index++;
         numPagesAllocated++;
     }
+    pageTable[vpn].valid = TRUE;
     pageTable[vpn].physicalPage = next_page;
     physpid[next_page] = currentThread->GetPID();
     physvpn[next_page] = vpn;
@@ -430,7 +452,8 @@ AddrSpace::handle_PFE(int vpn){
         pageTable[vpn].backedup=TRUE;
     }
     else{
-        DEBUG('y', "I am here for vpn%d and numPagesAllocated%d\n",vpn,numPagesAllocated);
+//        DEBUG('y', "I am here for vpn%d and numPagesAllocated%d\n",vpn,numPagesAllocated);
+        DEBUG('o', "Here at the backup Array for %d %d\n",next_page,vpn);
         for(int i=0;i<PageSize;i++){
             machine->mainMemory[next_page*PageSize+i] = backup[vpn*PageSize+i];
         }
@@ -444,13 +467,54 @@ AddrSpace::handle_PFE(int vpn){
 
 }
 
+
+void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
+    int next_page,next_page_parent;
+    TranslationEntry * parentPageTable = parentSpace->pageTable;
+    int j=0;
+    for (int i = 0; i < numPages; i++) {
+
+        pageTable[i].virtualPage = i;
+        if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
+        DEBUG('o', "I am in child for vpn %d\n",i);
+            if(numPagesAllocated == NumPhysPages){
+                next_page=replace(0,0);
+            }
+            else if(free_page_count!=0){
+                next_page = (int)(pagesfree->Remove());
+                free_page_count--;
+                numPagesAllocated++;
+            }
+            else{                
+                next_page = next_phys_index;
+                next_phys_index++;
+                numPagesAllocated++;
+            }
+            pageTable[i].physicalPage = next_page;
+            physpid[next_page] = pid;
+            //DEBUG('w', "I am here for vpn%d and numPagesAllocated%d\n",i,numPagesAllocated);
+            physvpn[next_page] = i;
+            next_page_parent=parentPageTable[i].physicalPage;
+            j++;
+            for(int z=0;z<PageSize;z++){
+                machine->mainMemory[PageSize*next_page+z] = machine->mainMemory[next_page_parent*PageSize+z];
+            }
+        }
+        else{
+            pageTable[i].physicalPage=parentPageTable[i].physicalPage;
+    //        DEBUG('k',"Hello %d\n",i);
+        }
+    }
+}
+
 int 
 AddrSpace::replace(int algo, int ppn){
-    int rnd = 0;
+    int rnd = 3;
     int temppid = physpid[rnd];
     int vpn = physvpn[rnd];
     Thread* tempthread = threadArray[temppid];
     TranslationEntry * pageTable1 = tempthread->space->pageTable;
+        DEBUG('o', "Here at the back replace for %d %d\n",temppid,vpn);
     for(int i=0;i<PageSize;i++){
         tempthread->space->backup[vpn*PageSize+i] = machine->mainMemory[rnd*PageSize+i];
     }

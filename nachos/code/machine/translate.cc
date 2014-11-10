@@ -208,7 +208,7 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     vpn = (unsigned) virtAddr / PageSize;
     offset = (unsigned) virtAddr % PageSize;
     
-    DEBUG('y', "In the translate %d \n",vpn);
+    DEBUG('y', "In the translate %d for pid %d\n",vpn,currentThread->GetPID());
 
   if (tlb == NULL) {		// => page table => vpn is index into table
 	if (vpn >= pageTableSize) {
