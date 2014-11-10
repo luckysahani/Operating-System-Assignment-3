@@ -184,8 +184,8 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
     ASSERT(numPages+numPagesAllocated <= NumPhysPages);                // check we're not trying
                                                                                 // to run anything too big --
                                                                                 // at least until we have
-                                                                                // virtual memory
-
+                                                                // virtual memory
+    char_exec=parentSpace->char_exec;
     DEBUG('a', "Initializing address space, num pages %d, size %d\n",
                                         numPages, size);
     // first, set up the translation
@@ -193,12 +193,25 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
     pageTable = new TranslationEntry[numPages];
     int j=0;
  //   DEBUG('k',"Hello %d\n",parentPaTable[14].shared);    
+    int next_page,next_page_parent;
     for (i = 0; i < numPages; i++) {
 
         pageTable[i].virtualPage = i;
         if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
-            pageTable[i].physicalPage = j+numPagesAllocated;
+            if(free_page_count!=0){
+                next_page = (int)(pagesfree->Remove());
+                free_page_count--;
+            }
+            else{
+                next_page = next_phys_index;
+                next_phys_index++;
+            }
+            pageTable[i].physicalPage = next_page;
+            next_page_parent=parentPageTable[i].physicalPage;
             j++;
+            for(int z=0;z<PageSize;z++){
+                machine->mainMemory[PageSize*next_page+z] = machine->mainMemory[next_page_parent*PageSize+z];
+            }
         }
         else{
             pageTable[i].physicalPage=parentPageTable[i].physicalPage;
@@ -207,19 +220,19 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
         pageTable[i].valid = parentPageTable[i].valid;
         pageTable[i].use = parentPageTable[i].use;
         pageTable[i].dirty = parentPageTable[i].dirty;
-        pageTable[i].readOnly = parentPageTable[i].readOnly;  	// if the code segment was entirely on
-        pageTable[i].shared = parentPageTable[i].shared;                                			// a separate page, we could set its
-                                        			// pages to be read-only
+        pageTable[i].readOnly = parentPageTable[i].readOnly;    // if the code segment was entirely on
+        pageTable[i].shared = parentPageTable[i].shared;                                            // a separate page, we could set its
+                                                    // pages to be read-only
     }
     
 
     // Copy the contents
-    unsigned startAddrParent = parentPageTable[0].physicalPage*PageSize;
-    unsigned startAddrChild = numPagesAllocated*PageSize;
+    // unsigned startAddrParent = parentPageTable[0].physicalPage*PageSize;
+    // unsigned startAddrChild = numPagesAllocated*PageSize;
     
     j=0;
     
-    for (i=0; i<numPages; i++) {
+/*    for (i=0; i<numPages; i++) {
         if(!parentPageTable[i].shared && parentPageTable[i].valid){
             for(int k=0; k<PageSize; k++){
                 machine->mainMemory[startAddrChild+(j*PageSize+k)] = machine->mainMemory[startAddrParent+(i*PageSize+k)];
@@ -227,7 +240,8 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
             j++;
         }
     }
-
+*/
+    DEBUG('f', "In th fork\n");
     numPagesAllocated += j;
 }
 
@@ -326,12 +340,13 @@ AddrSpace::handle_PFE(int vpn){
     numPagesAllocated++;
     int next_page;
     if(free_page_count!=0){
-        next_page = next_phys_index;
-        next_phys_index++;
-    }
-    else{
         next_page = (int)(pagesfree->Remove());
         free_page_count--;
+    }
+    else{
+        
+        next_page = next_phys_index;
+        next_phys_index++;
     }
     pageTable[vpn].physicalPage = next_page;
     DEBUG('p',"Handling page faults at the end handle_PFE %d\n",next_page);
@@ -395,8 +410,8 @@ AddrSpace::handle_PFE(int vpn){
     }
     delete exec_ptr;
     return vpn;
-    else{
+    // else{
 
-    }
+    // }
 
 }

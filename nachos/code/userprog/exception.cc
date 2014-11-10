@@ -167,6 +167,7 @@ ExceptionHandler(ExceptionType which)
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
        
        child = new Thread("Forked thread", GET_NICE_FROM_PARENT);
+     //  DEBUG('f', "In forked exception");
        child->space = new AddrSpace (currentThread->space);  // Duplicates the address space
        child->SaveUserState ();		     		      // Duplicate the register set
        child->ResetReturnValue ();			     // Sets the return register to zero
