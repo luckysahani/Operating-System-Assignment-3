@@ -41,6 +41,9 @@ int next_phys_index;
 int free_page_count;
 int * physpid;
 int * physvpn;
+int *fifo_array;
+int fifo_count;
+int fifo_head;
 // Our definations
 
 
@@ -135,6 +138,9 @@ Initialize(int argc, char **argv)
     free_page_count = 0;
     physpid = new int[NumPhysPages];
     physvpn = new int[NumPhysPages];
+    fifo_array = new int[NumPhysPages];
+    fifo_head = 0;
+    fifo_count = 0;
 
     schedulingAlgo = NON_PREEMPTIVE_BASE;	// Default
 

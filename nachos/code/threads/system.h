@@ -64,11 +64,14 @@ extern int next_phys_index;
 extern int free_page_count;
 extern int * physpid;
 extern int * physvpn;
-
+extern int *fifo_array;
+extern int fifo_count;
+extern int fifo_head;
 
 extern int cpu_burst_start_time;	// Records the start of current CPU burst
 extern int completionTimeArray[];	// Records the completion time of all simulated threads
 extern bool excludeMainThread;		// Used by completion time statistics calculation
+
 
 class TimeSortedWaitQueue {		// Needed to implement SC_Sleep
 private:

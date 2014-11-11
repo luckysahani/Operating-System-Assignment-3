@@ -234,6 +234,8 @@ Thread::Exit (bool terminateSim, int exitcode)
 
     threadToBeDestroyed = currentThread;
 
+    currentThread->space->removepages();
+
     Thread *nextThread;
 
     if (status == RUNNING) {
@@ -283,6 +285,21 @@ Thread::Exit (bool terminateSim, int exitcode)
     }
     scheduler->Run(nextThread); // returns when we've been signalled
 }
+
+
+
+
+// void
+// Thread::removepages(){
+//    DEBUG('j', "Getting outof thread\n");
+//    TranslationEnrty * pageTable1 = currentThread->pageTable;
+//     for(unsigned int i=0;i<numPages;i++){
+//         if(pageTable1[i].valid && !pageTable1[i].shared){    
+//             pagesfree->Append((void*)(pageTable1[i].physicalPage));
+//             numPagesAllocated--;
+//         }
+//     }
+// }
 
 //----------------------------------------------------------------------
 // Thread::Yield

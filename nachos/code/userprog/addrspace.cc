@@ -148,27 +148,34 @@ AddrSpace::shm_all(int size_shared){
         pageTable_new[i].dirty = pageTable[i].dirty;
         pageTable_new[i].readOnly = pageTable[i].readOnly;
         pageTable_new[i].shared = pageTable[i].shared;    // if the code segment was entirely on
-        
+        pageTable_new[i].backedup = pageTable[i].backedup;
     }
     int next_page;
     for (i = numPages; i < new_numPages; i++) {
         pageTable_new[i].virtualPage = i;
-        if(free_page_count!=0){
-                next_page = (int)(pagesfree->Remove());
-                free_page_count--;
+        if(numPagesAllocated == NumPhysPages){
+            next_page=replace(0,-1);
         }
-        else{
+        else if(free_page_count!=0){
+            next_page = (int)(pagesfree->Remove());
+            free_page_count--;
+            numPagesAllocated++;
+        }
+        else{                
             next_page = next_phys_index;
             next_phys_index++;
+            numPagesAllocated++;
         }
         pageTable_new[i].physicalPage = next_page;
         physpid[next_page] = currentThread->GetPID();
+        physvpn[next_page] = i;
         bzero(&machine->mainMemory[next_page*PageSize],PageSize);
         pageTable_new[i].valid = TRUE;
         pageTable_new[i].use = FALSE;
         pageTable_new[i].dirty = FALSE;
         pageTable_new[i].readOnly = FALSE;    // if the code segment was entirely on
         pageTable_new[i].shared = TRUE;
+        pageTable_new[i].backedup = TRUE;
     }
     int retvalue=numPages;
     DEBUG('z',"Here are tou in shm allocate %d\n",numPages);
@@ -239,17 +246,15 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
     //         pageTable[i].physicalPage=parentPageTable[i].physicalPage;
     // //        DEBUG('k',"Hello %d\n",i);
     //     }
-        pageTable[i].valid = parentPageTable[i].valid;
-        pageTable[i].use = parentPageTable[i].use;
-        pageTable[i].dirty = parentPageTable[i].dirty;
-        pageTable[i].readOnly = parentPageTable[i].readOnly;    // if the code segment was entirely on
-        pageTable[i].shared = parentPageTable[i].shared;                                            // a separate page, we could set its
-                                                    // pages to be read-only
+        // pageTable[i].valid = parentPageTable[i].valid;
+        // pageTable[i].use = parentPageTable[i].use;
+        // pageTable[i].dirty = parentPageTable[i].dirty;
+        // pageTable[i].readOnly = parentPageTable[i].readOnly;    // if the code segment was entirely on
+        // pageTable[i].shared = parentPageTable[i].shared;                                            // a separate page, we could set its
+        // pageTable[i].backedup= parentPageTable[i].backedup;                                            // pages to be read-only
     }
     initbackup(size);
-    for(int i=0;i<size;i++){
-        backup[i] = parentSpace->backup[i];
-    }
+    
 
    // DEBUG('w', "I am here for vpn after fork\n");
     
@@ -281,19 +286,28 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
 
 AddrSpace::~AddrSpace()
 {
-    DEBUG('w', "Getting outof thread\n");
+    DEBUG('j', "Getting outof thread\n");
     for(unsigned int i=0;i<numPages;i++){
-        if(pageTable[i].valid && !pageTable[i].shared){
-            if(pageTable[i].valid){
-                pagesfree->Append((void*)(pageTable[i].physicalPage));
-                numPagesAllocated--;
-
-            }
+        if(pageTable[i].valid && !pageTable[i].shared){    
+            pagesfree->Append((void*)(pageTable[i].physicalPage));
+            numPagesAllocated--;
         }
     }
    delete pageTable;
 }
 
+
+void
+AddrSpace::removepages(){
+   DEBUG('j', "Getting outof thread\n");
+    for(unsigned int i=0;i<numPages;i++){
+        if(pageTable[i].valid && !pageTable[i].shared){    
+            pagesfree->Append((void*)(pageTable[i].physicalPage));
+            numPagesAllocated--;
+            free_page_count++;
+        }
+    }
+}
 //----------------------------------------------------------------------
 // AddrSpace::InitRegisters
 // 	Set the initial values for the user-level register set.
@@ -371,6 +385,7 @@ AddrSpace::handle_PFE(int vpn){
     NoffHeader noffH;
     DEBUG('p',"Handling page faults inside handle_PFE\n");
     int next_page;
+    DEBUG('y',"I am i free world with alloc %d\n",numPagesAllocated);
 
         DEBUG('o',"In the handle_PFE for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
     if(numPagesAllocated == NumPhysPages){
@@ -382,8 +397,7 @@ AddrSpace::handle_PFE(int vpn){
         free_page_count--;
         numPagesAllocated++;
     }
-    else{
-        
+    else{        
         next_page = next_phys_index;
         next_phys_index++;
         numPagesAllocated++;
@@ -453,7 +467,7 @@ AddrSpace::handle_PFE(int vpn){
     }
     else{
 //        DEBUG('y', "I am here for vpn%d and numPagesAllocated%d\n",vpn,numPagesAllocated);
-        DEBUG('o', "Here at the backup Array for %d %d\n",next_page,vpn);
+        DEBUG('o', "Here at the backup Array for %d %d\n",currentThread->GetPID(),vpn);
         for(int i=0;i<PageSize;i++){
             machine->mainMemory[next_page*PageSize+i] = backup[vpn*PageSize+i];
         }
@@ -476,9 +490,8 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
 
         pageTable[i].virtualPage = i;
         if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
-        DEBUG('o', "I am in child for vpn %d\n",i);
             if(numPagesAllocated == NumPhysPages){
-                next_page=replace(0,0);
+                next_page=replace(0,parentPageTable[i].physicalPage);
             }
             else if(free_page_count!=0){
                 next_page = (int)(pagesfree->Remove());
@@ -496,6 +509,7 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
             physvpn[next_page] = i;
             next_page_parent=parentPageTable[i].physicalPage;
             j++;
+                DEBUG('o', "I am in child for vpn %d np %d and pnp %d\n",i,next_page,next_page_parent);
             for(int z=0;z<PageSize;z++){
                 machine->mainMemory[PageSize*next_page+z] = machine->mainMemory[next_page_parent*PageSize+z];
             }
@@ -504,22 +518,40 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
             pageTable[i].physicalPage=parentPageTable[i].physicalPage;
     //        DEBUG('k',"Hello %d\n",i);
         }
+        pageTable[i].valid = parentPageTable[i].valid;
+        pageTable[i].use = parentPageTable[i].use;
+        pageTable[i].dirty = parentPageTable[i].dirty;
+        pageTable[i].readOnly = parentPageTable[i].readOnly;    // if the code segment was entirely on
+        pageTable[i].shared = parentPageTable[i].shared;                                            // a separate page, we could set its
+        pageTable[i].backedup= parentPageTable[i].backedup;                                            // pages to be read-only
+        for(int k=0;k<PageSize;k++){
+            backup[i*PageSize+k]=parentSpace->backup[i*PageSize+k];
+        }
     }
 }
 
 int 
 AddrSpace::replace(int algo, int ppn){
-    int rnd = 3;
-    int temppid = physpid[rnd];
-    int vpn = physvpn[rnd];
-    Thread* tempthread = threadArray[temppid];
-    TranslationEntry * pageTable1 = tempthread->space->pageTable;
-        DEBUG('o', "Here at the back replace for %d %d\n",temppid,vpn);
-    for(int i=0;i<PageSize;i++){
-        tempthread->space->backup[vpn*PageSize+i] = machine->mainMemory[rnd*PageSize+i];
+    if(algo==0){
+        int rnd = Random()%NumPhysPages;
+        while(rnd==ppn || threadArray[physpid[rnd]]->space->pageTable[physvpn[rnd]].shared){
+            rnd = Random()%NumPhysPages;
+        }
+            DEBUG('l',"I am here with rnd %d\n",rnd);
+        int temppid = physpid[rnd];
+        int vpn = physvpn[rnd];
+        Thread* tempthread = threadArray[temppid];
+        TranslationEntry * pageTable1 = tempthread->space->pageTable;
+            DEBUG('o', "Backing up for pid %d and vpn %d\n",temppid,vpn);
+        for(int i=0;i<PageSize;i++){
+            tempthread->space->backup[vpn*PageSize+i] = machine->mainMemory[rnd*PageSize+i];
+        }
+        pageTable1[vpn].physicalPage = -1;
+        pageTable1[vpn].valid = FALSE;
+        pageTable1[vpn].dirty = FALSE;
+        return rnd;
     }
-    pageTable1[vpn].physicalPage = -1;
-    pageTable1[vpn].valid = FALSE;
-    pageTable1[vpn].dirty = FALSE;
-    return rnd;
+    else if(algo==1){
+        
+    }
 }

@@ -208,14 +208,14 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     vpn = (unsigned) virtAddr / PageSize;
     offset = (unsigned) virtAddr % PageSize;
     
-    DEBUG('y', "In the translate %d for pid %d\n",vpn,currentThread->GetPID());
 
-  if (tlb == NULL) {		// => page table => vpn is index into table
-	if (vpn >= pageTableSize) {
-	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
-			virtAddr, pageTableSize);
-	    return AddressErrorException;
-	} else if (!pageTable[vpn].valid) {
+  if (tlb == NULL) {    // => page table => vpn is index into table
+  if (vpn >= pageTableSize) {
+      DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
+      virtAddr, pageTableSize);
+      return AddressErrorException;
+  } else if (!pageTable[vpn].valid) {
+    DEBUG('y', "In the translate %d for pid %d\n",vpn,currentThread->GetPID());
 	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
 			virtAddr, pageTableSize);
       machine->RaiseException(PageFaultException,vpn);
