@@ -208,7 +208,13 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     vpn = (unsigned) virtAddr / PageSize;
     offset = (unsigned) virtAddr % PageSize;
     
-      DEBUG('y', "In the translate %d for pid %d\n",vpn,currentThread->GetPID());
+      DEBUG('y', "In the translate %d for pid %d\n",vpn,pageTable[vpn].valid);
+
+  if(pageTable[vpn].valid && algo == '2' && !pageTable[vpn].shared){
+    DEBUG('Y',"Hello I am doing online algorithm for vpn %d and pid %d\n",vpn,currentThread->GetPID());
+    lru->bringtotop(physlru[pageTable[vpn].physicalPage]);
+    DEBUG('Y',"Hello I am doing online algorithm for vpn %d and pid %d\n",vpn,currentThread->GetPID());
+  }
 
   if (tlb == NULL) {    // => page table => vpn is index into table
   if (vpn >= pageTableSize) {

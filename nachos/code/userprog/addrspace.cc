@@ -556,7 +556,16 @@ AddrSpace::replace(int ppn){
         DEBUG('l',"I am here with rnd %d\n",rnd);
     }
     else if(algo=='2'){
-
+        if(lru->tail->ppn!=ppn){
+            rnd = lru->tail->ppn;
+            lru->bringtotop(lru->tail);
+            physlru[rnd] = lru->head;
+        }
+        else{
+            rnd = lru->tail->prev->ppn;
+            lru->bringtotop(lru->tail->prev);
+            physlru[rnd] = lru->head;
+        }
     }
     temppid = physpid[rnd];
     vpn = physvpn[rnd];
@@ -595,6 +604,16 @@ AddrSpace::removepages(){
             }
         }
     }
+    else if(algo=='2'){
+        for(unsigned int i=0;i<numPages;i++){
+            if(pageTable[i].valid && !pageTable[i].shared){    
+                pagesfree->Append((void*)(pageTable[i].physicalPage));
+                numPagesAllocated--;
+                free_page_count++;
+                lru->deletenode(physlru[pageTable[i].physicalPage]);
+            }
+        }
+    }
 }
 
 void
@@ -604,6 +623,7 @@ AddrSpace::maintain(int ppn){
         physfifo[ppn]=(fifo->head);
     }
     else if(algo=='2'){
-        
+        lru->insertathead(lru->makenode(ppn));
+        physlru[ppn]=(lru->head);
     }
 }

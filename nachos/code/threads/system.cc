@@ -45,11 +45,11 @@ int *fifo_array;
 int fifo_count;
 int fifo_head;
 int fifo_tail;
-node * LRU;
 node *temp;
 dbl *fifo;
 dbl *lru;
 node ** physfifo;
+node ** physlru;
 // Our definations
 
 
@@ -148,10 +148,11 @@ Initialize(int argc, char **argv)
     fifo_head = 0;
     fifo_count = 0;
     fifo_tail = 0;
-    LRU = new node[NumPhysPages];
     fifo = new dbl();
     physfifo = new node*[NumPhysPages];
     schedulingAlgo = NON_PREEMPTIVE_BASE;	// Default
+    lru = new dbl();
+    physlru = new node*[NumPhysPages];
 
     batchProcesses = new char*[MAX_BATCH_SIZE];
     ASSERT(batchProcesses != NULL);

@@ -79,6 +79,7 @@ extern bool excludeMainThread;		// Used by completion time statistics calculatio
 struct node
 {
    int ppn;
+   int ref;
    struct node* next;
    struct node* prev;
 };
