@@ -576,6 +576,7 @@ AddrSpace::removepages(){
 void
 AddrSpace::maintain(int ppn){
     if(algo=='1'){
+        
         fifo->insertathead(fifo->makenode(ppn));
     }
 }
