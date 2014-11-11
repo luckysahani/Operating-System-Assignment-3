@@ -34,13 +34,14 @@ class AddrSpace {
     void SaveState();			// Save/restore address space-specific
     void RestoreState();		// info on a context switch
 
-    int replace(int algo, int ppn);
+    int replace(int ppn);
     unsigned GetNumPages();
 
     TranslationEntry* GetPageTable();
     void initbackup(int size);
     void removepages();
     void Manage(int pid,AddrSpace *parentSpace);
+    void maintain(int ppn);
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!

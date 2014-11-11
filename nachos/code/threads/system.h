@@ -66,6 +66,7 @@ extern int * physpid;
 extern int * physvpn;
 extern int *fifo_array;
 extern int fifo_count;
+extern int fifo_tail;
 extern int fifo_head;
 extern char algo;
 
