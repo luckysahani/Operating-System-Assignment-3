@@ -138,6 +138,7 @@ int
 AddrSpace::shm_all(int size_shared){
     int page_shared = divRoundUp(size_shared, PageSize);
     unsigned int new_numPages = numPages + page_shared;
+    //DEBUG('y',"Number of pages shared %d",page_shared);
     TranslationEntry* pageTable_new = new TranslationEntry[new_numPages];
     unsigned int i=0;
     for (i = 0; i < numPages; i++) {
@@ -213,7 +214,7 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
     int j=0;
  //   DEBUG('k',"Hello %d\n",parentPaTable[14].shared);    
     int next_page,next_page_parent;
-    for (i = 0; i < numPages; i++) {
+   // for (i = 0; i < numPages; i++) {
 
     //     pageTable[i].virtualPage = i;
     //     if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
@@ -252,7 +253,7 @@ AddrSpace::AddrSpace(AddrSpace *parentSpace)
         // pageTable[i].readOnly = parentPageTable[i].readOnly;    // if the code segment was entirely on
         // pageTable[i].shared = parentPageTable[i].shared;                                            // a separate page, we could set its
         // pageTable[i].backedup= parentPageTable[i].backedup;                                            // pages to be read-only
-    }
+ //   }
     initbackup(size);
     
 
@@ -377,9 +378,9 @@ AddrSpace::handle_PFE(int vpn){
     int next_page;
 //    DEBUG('y',"I am i free world with alloc %d\n",numPagesAllocated);
 
-        DEBUG('o',"In the handle_PFE for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
     if(numPagesAllocated == NumPhysPages){
         DEBUG('o',"In the replacement for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
+    //    DEBUG('y',"In the handle_PFE for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
         next_page=replace(-1);
     }
     else if(free_page_count!=0){
@@ -468,6 +469,7 @@ AddrSpace::handle_PFE(int vpn){
     }
 //    numPagesAllocated++;
     delete exec_ptr;
+        //DEBUG('y',"In the handle_PFE for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
     return vpn;
     // else{
 
@@ -491,11 +493,13 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
                 next_page = (int)(pagesfree->Remove());
                 free_page_count--;
                 numPagesAllocated++;
+                maintain(next_page);
             }
             else{                
                 next_page = next_phys_index;
                 next_phys_index++;
                 numPagesAllocated++;
+                maintain(next_page);
             }
             pageTable[i].physicalPage = next_page;
             physpid[next_page] = pid;
@@ -538,6 +542,12 @@ AddrSpace::replace(int ppn){
         if(fifo->tail->ppn!=ppn){
             rnd = fifo->tail->ppn;
             fifo->bringtotop(fifo->tail);
+            physfifo[rnd] = fifo->head;
+        }
+        else{
+            rnd = fifo->tail->prev->ppn;
+            fifo->bringtotop(fifo->tail->prev);
+            physfifo[rnd] = fifo->head;
         }
         DEBUG('l',"I am here with rnd %d\n",rnd);
     }
@@ -569,14 +579,21 @@ AddrSpace::removepages(){
         }
     }
     else if(algo=='1'){
-
+        for(unsigned int i=0;i<numPages;i++){
+            if(pageTable[i].valid && !pageTable[i].shared){    
+                pagesfree->Append((void*)(pageTable[i].physicalPage));
+                numPagesAllocated--;
+                free_page_count++;
+                fifo->deletenode(physfifo[pageTable[i].physicalPage]);
+            }
+        }
     }
 }
 
 void
 AddrSpace::maintain(int ppn){
     if(algo=='1'){
-        
         fifo->insertathead(fifo->makenode(ppn));
+        physfifo[ppn]=(fifo->head);
     }
 }

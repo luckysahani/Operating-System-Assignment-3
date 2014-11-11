@@ -46,8 +46,9 @@ int fifo_count;
 int fifo_head;
 int fifo_tail;
 node * LRU;
-
+node *temp;
 dbl *fifo;
+node ** physfifo;
 // Our definations
 
 
@@ -148,7 +149,7 @@ Initialize(int argc, char **argv)
     fifo_tail = 0;
     LRU = new node[NumPhysPages];
     fifo = new dbl();
-
+    physfifo = new node*[NumPhysPages];
     schedulingAlgo = NON_PREEMPTIVE_BASE;	// Default
 
     batchProcesses = new char*[MAX_BATCH_SIZE];
@@ -304,8 +305,9 @@ dbl::insertathead(node * nd){
     head = nd;
 }
 
-void
+node*
 dbl::deletenode(node * nd){
+    temp = nd->next;
     if(nd!=head){
         nd->prev->next = nd->next;
         if(nd==tail) tail = nd->prev;
@@ -318,6 +320,7 @@ dbl::deletenode(node * nd){
         else nd->next->prev = NULL;
         delete nd;
     }
+    return temp;
 }
 
 void

@@ -83,7 +83,7 @@ struct node
    struct node* prev;
 };
 
-extern node * LRU;
+extern node ** physfifo;
 
 class dbl
 {
@@ -91,7 +91,7 @@ class dbl
       dbl();
       ~dbl();
       void insertathead(node* nd);
-      void deletenode(node* nd);
+      node* deletenode(node* nd);
       void bringtotop(node* nd);
       node* makenode(int ppn);
       node* head;

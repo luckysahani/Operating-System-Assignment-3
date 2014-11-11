@@ -215,10 +215,10 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
       virtAddr, pageTableSize);
       return AddressErrorException;
   } else if (!pageTable[vpn].valid) {
-    DEBUG('y', "In the translate %d for pid %d\n",vpn,currentThread->GetPID());
-	    DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
-			virtAddr, pageTableSize);
+      DEBUG('a', "virtual page # %d too large for page table size %d!\n", 
+      virtAddr, pageTableSize);
       machine->RaiseException(PageFaultException,vpn);
+      DEBUG('y', "In the translate %d for pid %d\n",vpn,currentThread->GetPID());
 //	    return PageFaultException;
 	}
 	entry = &pageTable[vpn];
