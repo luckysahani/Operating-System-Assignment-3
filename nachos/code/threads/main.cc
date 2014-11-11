@@ -76,6 +76,7 @@ extern void ReadInputAndFork(char *file);
 //	"argv" is an array of strings, one for each command line argument
 //		ex: "nachos -d +" -> argv = {"nachos", "-d", "+"}
 //----------------------------------------------------------------------
+char algo;
 
 int
 main(int argc, char **argv)
@@ -128,10 +129,15 @@ main(int argc, char **argv)
 	        ConsoleTest(*(argv + 1), *(argv + 2));
 	        argCount = 3;
 	    }
+
 	    interrupt->Halt();		// once we start the console, then 
 					// Nachos will loop forever waiting 
 					// for console input
-	} else if (!strcmp(*argv, "-F")) {	// test multiprogramming
+	}
+  else if(!strcmp(*argv,"-r")){
+        algo = *(*(argv+1)); 
+  } 
+  else if (!strcmp(*argv, "-F")) {	// test multiprogramming
             ASSERT (argc > 1);
             ReadInputAndFork(*(argv + 1));
             argCount = 2;

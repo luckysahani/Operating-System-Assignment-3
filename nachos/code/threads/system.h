@@ -67,11 +67,34 @@ extern int * physvpn;
 extern int *fifo_array;
 extern int fifo_count;
 extern int fifo_head;
+extern char algo;
 
 extern int cpu_burst_start_time;	// Records the start of current CPU burst
 extern int completionTimeArray[];	// Records the completion time of all simulated threads
 extern bool excludeMainThread;		// Used by completion time statistics calculation
 
+
+struct node
+{
+   int ppn;
+   struct node* next;
+   struct node* prev;
+};
+
+extern node * LRU;
+
+class dbl
+{
+   public:
+      dbl();
+      ~dbl();
+      void insertathead(node* nd);
+      void deletenode(node* nd);
+      void bringtotop(node* nd);
+      node* makenode(int ppn);
+      node* head;
+      node* tail;
+};
 
 class TimeSortedWaitQueue {		// Needed to implement SC_Sleep
 private:

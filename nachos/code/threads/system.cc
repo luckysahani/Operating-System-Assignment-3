@@ -44,6 +44,7 @@ int * physvpn;
 int *fifo_array;
 int fifo_count;
 int fifo_head;
+node * LRU;
 // Our definations
 
 
@@ -141,6 +142,7 @@ Initialize(int argc, char **argv)
     fifo_array = new int[NumPhysPages];
     fifo_head = 0;
     fifo_count = 0;
+    LRU = new node[NumPhysPages];
 
     schedulingAlgo = NON_PREEMPTIVE_BASE;	// Default
 
@@ -278,3 +280,55 @@ Cleanup()
     Exit(0);
 }
 
+
+dbl::dbl(){
+    head = NULL;
+    tail = NULL;
+}
+
+dbl::~dbl(){
+
+}
+
+void 
+dbl::insertathead(node * nd){
+    nd->prev = NULL;
+    nd->next = head;
+    if(head!=NULL) nd->next->prev=nd;
+    head = nd;
+}
+
+void
+dbl::deletenode(node * nd){
+    if(nd!=head){
+        nd->prev->next = nd->next;
+        if(nd==tail) tail = nd->prev;
+        else nd->next->prev = nd->prev;
+        delete nd;
+    }
+    else{
+        head=nd->next;
+        if(tail==nd) tail = nd->prev;
+        else nd->next->prev = NULL;
+        delete nd;
+    }
+}
+
+void
+dbl::bringtotop(node* nd){
+    if(nd!=head){
+        nd->prev->next = nd->next;
+        if(nd->next==NULL){
+            tail=nd->prev;
+        }
+        else nd->next->prev=nd->prev;
+        insertathead(nd);
+    }
+}
+
+node* 
+dbl::makenode(int ppn){
+    node * nd;
+    nd->ppn=ppn;
+    return nd;
+}
