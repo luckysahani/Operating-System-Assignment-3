@@ -69,6 +69,7 @@ extern int fifo_count;
 extern int fifo_tail;
 extern int fifo_head;
 extern char algo;
+//extern dbl *fifo;
 
 extern int cpu_burst_start_time;	// Records the start of current CPU burst
 extern int completionTimeArray[];	// Records the completion time of all simulated threads
@@ -113,6 +114,7 @@ public:
    void SetNext (TimeSortedWaitQueue *n) { next = n; }
 };
 
+extern dbl* fifo;
 extern TimeSortedWaitQueue *sleepQueueHead;
 
 #ifdef USER_PROGRAM

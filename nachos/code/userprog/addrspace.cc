@@ -375,12 +375,12 @@ AddrSpace::handle_PFE(int vpn){
     NoffHeader noffH;
     DEBUG('p',"Handling page faults inside handle_PFE\n");
     int next_page;
-    DEBUG('y',"I am i free world with alloc %d\n",numPagesAllocated);
+//    DEBUG('y',"I am i free world with alloc %d\n",numPagesAllocated);
 
         DEBUG('o',"In the handle_PFE for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
     if(numPagesAllocated == NumPhysPages){
         DEBUG('o',"In the replacement for pid %d and vpn %d\n",currentThread->GetPID(),vpn);
-        next_page=replace(0);
+        next_page=replace(-1);
     }
     else if(free_page_count!=0){
         next_page = (int)(pagesfree->Remove());
@@ -535,20 +535,9 @@ AddrSpace::replace(int ppn){
         
     }
     else if(algo=='1'){
-        if(fifo_count>0){
-            if(fifo_array[fifo_tail]!=ppn){
-                rnd = fifo_array[fifo_tail];
-                fifo_tail = (fifo_tail+1)%NumPhysPages;
-                fifo_array[fifo_head] = rnd;
-                fifo_head = (fifo_head+1)%NumPhysPages;
-            }
-            else{
-                rnd=fifo_array[(fifo_tail+1)%NumPhysPages];
-                fifo_array[(fifo_tail+1)%NumPhysPages] = fifo_array[fifo_tail];
-                fifo_tail = (fifo_tail+1)%NumPhysPages;
-                fifo_array[fifo_head] = rnd;
-                fifo_head = (fifo_head+1)%NumPhysPages;
-            }
+        if(fifo->tail->ppn!=ppn){
+            rnd = fifo->tail->ppn;
+            fifo->bringtotop(fifo->tail);
         }
         DEBUG('l',"I am here with rnd %d\n",rnd);
     }
@@ -587,8 +576,6 @@ AddrSpace::removepages(){
 void
 AddrSpace::maintain(int ppn){
     if(algo=='1'){
-        fifo_array[fifo_head] = ppn;
-        fifo_head = (fifo_head+1)%NumPhysPages;
-        fifo_count++;
+        fifo->insertathead(fifo->makenode(ppn));
     }
 }

@@ -46,6 +46,8 @@ int fifo_count;
 int fifo_head;
 int fifo_tail;
 node * LRU;
+
+dbl *fifo;
 // Our definations
 
 
@@ -145,6 +147,7 @@ Initialize(int argc, char **argv)
     fifo_count = 0;
     fifo_tail = 0;
     LRU = new node[NumPhysPages];
+    fifo = new dbl();
 
     schedulingAlgo = NON_PREEMPTIVE_BASE;	// Default
 
@@ -297,6 +300,7 @@ dbl::insertathead(node * nd){
     nd->prev = NULL;
     nd->next = head;
     if(head!=NULL) nd->next->prev=nd;
+    else tail =nd;
     head = nd;
 }
 
@@ -330,7 +334,8 @@ dbl::bringtotop(node* nd){
 
 node* 
 dbl::makenode(int ppn){
-    node * nd;
+    node  *nd = new node;
     nd->ppn=ppn;
+//    DEBUG('y', "hello\n");
     return nd;
 }
