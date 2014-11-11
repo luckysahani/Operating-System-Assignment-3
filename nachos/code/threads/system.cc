@@ -48,6 +48,7 @@ int fifo_tail;
 node * LRU;
 node *temp;
 dbl *fifo;
+dbl *lru;
 node ** physfifo;
 // Our definations
 

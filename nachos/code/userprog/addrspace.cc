@@ -136,21 +136,13 @@ AddrSpace::initbackup(int size){
 
 int
 AddrSpace::shm_all(int size_shared){
+    DEBUG('y',"In shared memory \n");
     int page_shared = divRoundUp(size_shared, PageSize);
     unsigned int new_numPages = numPages + page_shared;
     //DEBUG('y',"Number of pages shared %d",page_shared);
     TranslationEntry* pageTable_new = new TranslationEntry[new_numPages];
     unsigned int i=0;
-    for (i = 0; i < numPages; i++) {
-        pageTable_new[i].virtualPage = pageTable[i].virtualPage;
-        pageTable_new[i].physicalPage = pageTable[i].physicalPage;
-        pageTable_new[i].valid = pageTable[i].valid;
-        pageTable_new[i].use = pageTable[i].use;
-        pageTable_new[i].dirty = pageTable[i].dirty;
-        pageTable_new[i].readOnly = pageTable[i].readOnly;
-        pageTable_new[i].shared = pageTable[i].shared;    // if the code segment was entirely on
-        pageTable_new[i].backedup = pageTable[i].backedup;
-    }
+    
     int next_page;
     for (i = numPages; i < new_numPages; i++) {
         pageTable_new[i].virtualPage = i;
@@ -178,6 +170,18 @@ AddrSpace::shm_all(int size_shared){
         pageTable_new[i].shared = TRUE;
         pageTable_new[i].backedup = TRUE;
     }
+
+    for (i = 0; i < numPages; i++) {
+        pageTable_new[i].virtualPage = pageTable[i].virtualPage;
+        pageTable_new[i].physicalPage = pageTable[i].physicalPage;
+        pageTable_new[i].valid = pageTable[i].valid;
+        pageTable_new[i].use = pageTable[i].use;
+        pageTable_new[i].dirty = pageTable[i].dirty;
+        pageTable_new[i].readOnly = pageTable[i].readOnly;
+        pageTable_new[i].shared = pageTable[i].shared;    // if the code segment was entirely on
+        pageTable_new[i].backedup = pageTable[i].backedup;
+    }
+
     int retvalue=numPages;
     DEBUG('z',"Here are tou in shm allocate %d\n",numPages);
     delete pageTable;
@@ -551,12 +555,15 @@ AddrSpace::replace(int ppn){
         }
         DEBUG('l',"I am here with rnd %d\n",rnd);
     }
+    else if(algo=='2'){
 
+    }
     temppid = physpid[rnd];
     vpn = physvpn[rnd];
     Thread* tempthread = threadArray[temppid];
+    //         DEBUG('y',"Making replacement %d\n",rnd);
     TranslationEntry * pageTable1 = tempthread->space->pageTable;
-        DEBUG('o', "Backing up for pid %d and vpn %d\n",temppid,vpn);
+        DEBUG('y', "Backing up for pid %d and vpn %d\n",temppid,vpn);
     for(int i=0;i<PageSize;i++){
         tempthread->space->backup[vpn*PageSize+i] = machine->mainMemory[rnd*PageSize+i];
     }
@@ -595,5 +602,8 @@ AddrSpace::maintain(int ppn){
     if(algo=='1'){
         fifo->insertathead(fifo->makenode(ppn));
         physfifo[ppn]=(fifo->head);
+    }
+    else if(algo=='2'){
+        
     }
 }

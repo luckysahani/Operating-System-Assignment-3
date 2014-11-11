@@ -183,7 +183,7 @@ Thread::Finish ()
     ASSERT(this == currentThread);
     
     DEBUG('t', "Finishing thread \"%s\"\n", getName());
-    
+    currentThread->space->removepages();
     threadToBeDestroyed = currentThread;
     Sleep();					// invokes SWITCH
     // not reached

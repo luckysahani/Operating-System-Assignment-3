@@ -84,6 +84,7 @@ struct node
 };
 
 extern node ** physfifo;
+extern node ** physlru;
 
 class dbl
 {
@@ -115,6 +116,7 @@ public:
 };
 
 extern dbl* fifo;
+extern dbl* lru;
 extern TimeSortedWaitQueue *sleepQueueHead;
 
 #ifdef USER_PROGRAM

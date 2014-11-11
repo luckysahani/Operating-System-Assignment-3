@@ -313,8 +313,11 @@ ExceptionHandler(ExceptionType which)
     } 
     else if((which == SyscallException && (type == syscall_ShmAllocate))){
        int size = machine->ReadRegister(4);
+       IntStatus oldlevel= interrupt->SetLevel(IntOff);
        machine->WriteRegister(2, currentThread->space->shm_all(size));
+            //       DEBUG('y',"In shared memory \n");
 
+       (void) interrupt->SetLevel(oldlevel);
        machine->WriteRegister(PrevPCReg, machine->ReadRegister(PCReg));
        machine->WriteRegister(PCReg, machine->ReadRegister(NextPCReg));
        machine->WriteRegister(NextPCReg, machine->ReadRegister(NextPCReg)+4);
@@ -345,6 +348,7 @@ ExceptionHandler(ExceptionType which)
     else if((which == SyscallException) && (type == syscall_SemOp)){
       int id = machine->ReadRegister(4);
       int op = machine->ReadRegister(5);
+
       if(op==1){
         sem[id]->V();
       }
@@ -461,7 +465,13 @@ ExceptionHandler(ExceptionType which)
       int vpn = machine->ReadRegister(39);
       DEBUG('p',"We encountered a page fault exception. at vpn %d\n", vpn);
     //  currentThread->space->handle_PFE(vpn);
-      DEBUG('p',"New valid bit is %d\n", currentThread->space->handle_PFE(vpn));
+     // DEBUG('y',"Here handling PFE\n");
+     // currentThread->SortedInsertInWaitQueue (0+stats->totalTicks);
+
+      // IntStatus oldlevel = interrupt->SetLevel(IntOff);
+      currentThread->space->handle_PFE(vpn);
+      // currentThread->SortedInsertInWaitQueue(1000+stats->totalTicks);
+      // (void*) interrupt->SetLevel(oldlevel);
     }
     else {
 	printf("Unexpected user mode exception %d %d\n", which, type);
