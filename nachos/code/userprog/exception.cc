@@ -349,6 +349,7 @@ ExceptionHandler(ExceptionType which)
       int id = machine->ReadRegister(4);
       int op = machine->ReadRegister(5);
 
+
       if(op==1){
         sem[id]->V();
       }
@@ -466,11 +467,11 @@ ExceptionHandler(ExceptionType which)
       DEBUG('p',"We encountered a page fault exception. at vpn %d\n", vpn);
     //  currentThread->space->handle_PFE(vpn);
      // DEBUG('y',"Here handling PFE\n");
-     // currentThread->SortedInsertInWaitQueue (0+stats->totalTicks);
+      currentThread->SortedInsertInWaitQueue (1000+stats->totalTicks);
 
       // IntStatus oldlevel = interrupt->SetLevel(IntOff);
       currentThread->space->handle_PFE(vpn);
-      // currentThread->SortedInsertInWaitQueue(1000+stats->totalTicks);
+     //  currentThread->SortedInsertInWaitQueue(1000+stats->totalTicks);
       // (void*) interrupt->SetLevel(oldlevel);
     }
     else {
