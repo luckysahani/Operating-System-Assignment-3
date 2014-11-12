@@ -50,6 +50,8 @@ dbl *fifo;
 dbl *lru;
 node ** physfifo;
 node ** physlru;
+int * lruclk;
+int lruclkptr;
 // Our definations
 
 
@@ -153,6 +155,12 @@ Initialize(int argc, char **argv)
     schedulingAlgo = NON_PREEMPTIVE_BASE;	// Default
     lru = new dbl();
     physlru = new node*[NumPhysPages];
+    lruclk = new int[NumPhysPages];
+    lruclkptr = 0;
+
+    for(int i=0;i<NumPhysPages;i++){
+        lruclk[i] = -2;
+    }
 
     batchProcesses = new char*[MAX_BATCH_SIZE];
     ASSERT(batchProcesses != NULL);

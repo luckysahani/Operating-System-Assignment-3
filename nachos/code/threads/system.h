@@ -69,6 +69,8 @@ extern int fifo_count;
 extern int fifo_tail;
 extern int fifo_head;
 extern char algo;
+extern int * lruclk;
+extern int lruclkptr;
 //extern dbl *fifo;
 
 extern int cpu_burst_start_time;	// Records the start of current CPU burst

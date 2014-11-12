@@ -169,6 +169,7 @@ AddrSpace::shm_all(int size_shared){
         pageTable_new[i].readOnly = FALSE;    // if the code segment was entirely on
         pageTable_new[i].shared = TRUE;
         pageTable_new[i].backedup = TRUE;
+        lruclk[next_page] = -1;
     }
 
     for (i = 0; i < numPages; i++) {
@@ -490,6 +491,16 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
 
         pageTable[i].virtualPage = i;
         if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
+
+            next_page_parent=parentPageTable[i].physicalPage;
+            if(algo==2){
+                lru->bringtotop(physlru[next_page_parent]);
+            }
+            else if(algo == 3){
+                lruclk[next_page_parent] = 1;
+            }
+
+
             if(numPagesAllocated == NumPhysPages){
                 next_page=replace(parentPageTable[i].physicalPage);
             }
@@ -509,7 +520,6 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
             physpid[next_page] = pid;
             //DEBUG('w', "I am here for vpn%d and numPagesAllocated%d\n",i,numPagesAllocated);
             physvpn[next_page] = i;
-            next_page_parent=parentPageTable[i].physicalPage;
             j++;
                 DEBUG('o', "I am in child for vpn %d np %d and pnp %d\n",i,next_page,next_page_parent);
             for(int z=0;z<PageSize;z++){
@@ -567,6 +577,16 @@ AddrSpace::replace(int ppn){
             physlru[rnd] = lru->head;
         }
     }
+    else if(algo=='3'){
+        while(lruclk[lruclkptr]!=0){
+            if(lruclk[lruclkptr] == 1 && lruclkptr!=ppn){
+                lruclk[lruclkptr] = 0;
+            }
+            lruclkptr = (lruclkptr+1)%NumPhysPages;
+        }
+        lruclk[lruclkptr] = 1;
+        rnd = lruclkptr;
+    }
     temppid = physpid[rnd];
     vpn = physvpn[rnd];
     Thread* tempthread = threadArray[temppid];
@@ -614,6 +634,16 @@ AddrSpace::removepages(){
             }
         }
     }
+    else if(algo=='3'){
+        for(unsigned int i=0;i<numPages;i++){
+            if(pageTable[i].valid && !pageTable[i].shared){    
+                pagesfree->Append((void*)(pageTable[i].physicalPage));
+                numPagesAllocated--;
+                free_page_count++;
+                lruclk[pageTable[i].physicalPage] = -2;
+            }
+        }
+    }
 }
 
 void
@@ -625,5 +655,8 @@ AddrSpace::maintain(int ppn){
     else if(algo=='2'){
         lru->insertathead(lru->makenode(ppn));
         physlru[ppn]=(lru->head);
+    }
+    else if(algo == '3'){
+        lruclk[ppn] = 1;
     }
 }
