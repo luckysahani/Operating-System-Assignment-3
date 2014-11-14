@@ -170,6 +170,7 @@ AddrSpace::shm_all(int size_shared){
         pageTable_new[i].shared = TRUE;
         pageTable_new[i].backedup = TRUE;
         lruclk[next_page] = -1;
+        stats->numPageFaults++;
     }
 
     for (i = 0; i < numPages; i++) {
@@ -181,7 +182,6 @@ AddrSpace::shm_all(int size_shared){
         pageTable_new[i].readOnly = pageTable[i].readOnly;
         pageTable_new[i].shared = pageTable[i].shared;    // if the code segment was entirely on
         pageTable_new[i].backedup = pageTable[i].backedup;
-        stats->numPageFaults++;
     }
 
     int retvalue=numPages;
@@ -503,10 +503,10 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
             stats->numPageFaults++;
 
             next_page_parent=parentPageTable[i].physicalPage;
-            if(algo==2){
+            if(algo== '3'){
                 lru->bringtotop(physlru[next_page_parent]);
             }
-            else if(algo == 3){
+            else if(algo == '4'){
                 lruclk[next_page_parent] = 1;
             }
 
@@ -550,14 +550,14 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
 int 
 AddrSpace::replace(int ppn){
     int rnd,temppid,vpn;
-    if(algo=='0'){
+    if(algo=='1'){
         rnd = Random()%NumPhysPages;
         while(rnd==ppn || threadArray[physpid[rnd]]->space->pageTable[physvpn[rnd]].shared){
             rnd = Random()%NumPhysPages;
         }
         
     }
-    else if(algo=='1'){
+    else if(algo=='2'){
         if(fifo->tail->ppn!=ppn){
             rnd = fifo->tail->ppn;
             fifo->bringtotop(fifo->tail);
@@ -570,7 +570,7 @@ AddrSpace::replace(int ppn){
         }
         DEBUG('l',"I am here with rnd %d\n",rnd);
     }
-    else if(algo=='2'){
+    else if(algo=='3'){
         if(lru->tail->ppn!=ppn){
             rnd = lru->tail->ppn;
             lru->bringtotop(lru->tail);
@@ -582,7 +582,7 @@ AddrSpace::replace(int ppn){
             physlru[rnd] = lru->head;
         }
     }
-    else if(algo=='3'){
+    else if(algo=='4'){
         while(lruclk[lruclkptr]!=0){
             if(lruclk[lruclkptr] == 1 && lruclkptr!=ppn){
                 lruclk[lruclkptr] = 0;
@@ -591,6 +591,7 @@ AddrSpace::replace(int ppn){
         }
         lruclk[lruclkptr] = 1;
         rnd = lruclkptr;
+        lruclkptr=(lruclkptr+1)%NumPhysPages;
     }
     temppid = physpid[rnd];
     vpn = physvpn[rnd];
@@ -609,7 +610,7 @@ AddrSpace::replace(int ppn){
 
 void
 AddrSpace::removepages(){
-    if(algo=='0'){
+    if(algo=='1'){
         DEBUG('j', "Getting outof thread\n");
         for(unsigned int i=0;i<numPages;i++){
             if(pageTable[i].valid && !pageTable[i].shared){    
@@ -619,7 +620,7 @@ AddrSpace::removepages(){
             }
         }
     }
-    else if(algo=='1'){
+    else if(algo=='2'){
         for(unsigned int i=0;i<numPages;i++){
             if(pageTable[i].valid && !pageTable[i].shared){    
                 pagesfree->Append((void*)(pageTable[i].physicalPage));
@@ -629,7 +630,7 @@ AddrSpace::removepages(){
             }
         }
     }
-    else if(algo=='2'){
+    else if(algo=='3'){
         for(unsigned int i=0;i<numPages;i++){
             if(pageTable[i].valid && !pageTable[i].shared){    
                 pagesfree->Append((void*)(pageTable[i].physicalPage));
@@ -639,7 +640,7 @@ AddrSpace::removepages(){
             }
         }
     }
-    else if(algo=='3'){
+    else if(algo=='4'){
         for(unsigned int i=0;i<numPages;i++){
             if(pageTable[i].valid && !pageTable[i].shared){    
                 pagesfree->Append((void*)(pageTable[i].physicalPage));
@@ -653,15 +654,15 @@ AddrSpace::removepages(){
 
 void
 AddrSpace::maintain(int ppn){
-    if(algo=='1'){
+    if(algo=='2'){
         fifo->insertathead(fifo->makenode(ppn));
         physfifo[ppn]=(fifo->head);
     }
-    else if(algo=='2'){
+    else if(algo=='3'){
         lru->insertathead(lru->makenode(ppn));
         physlru[ppn]=(lru->head);
     }
-    else if(algo == '3'){
+    else if(algo == '4'){
         lruclk[ppn] = 1;
     }
 }

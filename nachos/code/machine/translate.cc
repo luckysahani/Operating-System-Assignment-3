@@ -210,10 +210,10 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     
       DEBUG('y', "In the translate %d for pid %d\n",vpn,pageTable[vpn].valid);
 
-  if(pageTable[vpn].valid && algo == '2' && !pageTable[vpn].shared){
+  if(pageTable[vpn].valid && algo == '3' && !pageTable[vpn].shared){
     lru->bringtotop(physlru[pageTable[vpn].physicalPage]);
   }
-  else if(pageTable[vpn].valid && algo == '3' && !pageTable[vpn].shared){
+  else if(pageTable[vpn].valid && algo == '4' && !pageTable[vpn].shared){
     DEBUG('Y',"Hello I am doing online algorithm for vpn %d and pid %d\n",vpn,currentThread->GetPID());
     lruclk[pageTable[vpn].physicalPage] =1;
     DEBUG('Y',"Hello I am doing online algorithm for vpn %d and pid %d\n",vpn,currentThread->GetPID());
