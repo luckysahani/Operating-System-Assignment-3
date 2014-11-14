@@ -471,6 +471,7 @@ ExceptionHandler(ExceptionType which)
 
       // IntStatus oldlevel = interrupt->SetLevel(IntOff);
       currentThread->space->handle_PFE(vpn);
+      stats->numPageFaults++;
      //  currentThread->SortedInsertInWaitQueue(1000+stats->totalTicks);
       // (void*) interrupt->SetLevel(oldlevel);
     }

@@ -181,6 +181,7 @@ AddrSpace::shm_all(int size_shared){
         pageTable_new[i].readOnly = pageTable[i].readOnly;
         pageTable_new[i].shared = pageTable[i].shared;    // if the code segment was entirely on
         pageTable_new[i].backedup = pageTable[i].backedup;
+        stats->numPageFaults++;
     }
 
     int retvalue=numPages;
@@ -492,6 +493,8 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
         pageTable[i].virtualPage = i;
         if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
 
+            currentThread->SortedInsertInWaitQueue (1000+stats->totalTicks);
+            stats->numPageFaults++;
             next_page_parent=parentPageTable[i].physicalPage;
             if(algo==2){
                 lru->bringtotop(physlru[next_page_parent]);
