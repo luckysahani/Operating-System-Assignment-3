@@ -489,12 +489,19 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
     TranslationEntry * parentPageTable = parentSpace->pageTable;
     int j=0;
     for (int i = 0; i < numPages; i++) {
-
+        pageTable[i].valid = parentPageTable[i].valid;
+        pageTable[i].use = parentPageTable[i].use;
+        pageTable[i].dirty = parentPageTable[i].dirty;
+        pageTable[i].readOnly = parentPageTable[i].readOnly;    // if the code segment was entirely on
+        pageTable[i].shared = parentPageTable[i].shared;                                            // a separate page, we could set its
+        pageTable[i].backedup= parentPageTable[i].backedup;                                            // pages to be read-only
+        for(int k=0;k<PageSize;k++){
+                backup[i*PageSize+k]=parentSpace->backup[i*PageSize+k];
+        }
         pageTable[i].virtualPage = i;
         if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
+           // stats->numPageFaults++;
 
-            currentThread->SortedInsertInWaitQueue (1000+stats->totalTicks);
-            stats->numPageFaults++;
             next_page_parent=parentPageTable[i].physicalPage;
             if(algo==2){
                 lru->bringtotop(physlru[next_page_parent]);
@@ -528,20 +535,15 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
             for(int z=0;z<PageSize;z++){
                 machine->mainMemory[PageSize*next_page+z] = machine->mainMemory[next_page_parent*PageSize+z];
             }
+            // IntStatus oldlevel = interrupt->SetLevel(IntOff);
+            currentThread->SortedInsertInWaitQueue (1000+stats->totalTicks);
+            // (void*) interrupt->SetLevel(oldlevel);
         }
         else{
             pageTable[i].physicalPage=parentPageTable[i].physicalPage;
     //        DEBUG('k',"Hello %d\n",i);
         }
-        pageTable[i].valid = parentPageTable[i].valid;
-        pageTable[i].use = parentPageTable[i].use;
-        pageTable[i].dirty = parentPageTable[i].dirty;
-        pageTable[i].readOnly = parentPageTable[i].readOnly;    // if the code segment was entirely on
-        pageTable[i].shared = parentPageTable[i].shared;                                            // a separate page, we could set its
-        pageTable[i].backedup= parentPageTable[i].backedup;                                            // pages to be read-only
-        for(int k=0;k<PageSize;k++){
-            backup[i*PageSize+k]=parentSpace->backup[i*PageSize+k];
-        }
+        
     }
 }
 
