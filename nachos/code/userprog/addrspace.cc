@@ -500,7 +500,7 @@ void AddrSpace::Manage(int pid, AddrSpace *parentSpace ){
         }
         pageTable[i].virtualPage = i;
         if(parentPageTable[i].shared==FALSE && parentPageTable[i].valid){
-           // stats->numPageFaults++;
+            stats->numPageFaults++;
 
             next_page_parent=parentPageTable[i].physicalPage;
             if(algo==2){
