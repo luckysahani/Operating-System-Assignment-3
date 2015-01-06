@@ -1,8 +1,9 @@
 cs330-ass3
 ==========
+I TAKE NO GUARENTEE IF ANYONE COPIES THIS CODE ... THIS CODE IS FOR INFROMATION PURPOSE ONLY....
+========================
 
-
-All about bull shit nachos code !!!!!
+All about nachos code !!!!!
 
 
 1.) Make queues for free and allocate physical pages and add them or remove them correspondingly.
