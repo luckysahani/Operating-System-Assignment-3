@@ -1,4 +1,4 @@
-cs330-ass3
+CS330 Assignment 3
 ==========
 I TAKE NO GUARENTEE IF ANYONE COPIES THIS CODE ... THIS CODE IS FOR INFORMATION PURPOSE ONLY....
 ========================
